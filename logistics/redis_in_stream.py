@@ -1,11 +1,15 @@
+import math
 
 class RedisInStream:
     def set(self, data, db_instance):
 
-        for list_name, tickers in data.items():
-            for price in tickers:
-                db_instance.hset(f"market:{tickers}",
+        for category, series in data.items():
+            for ticker, price in series.items():
+                if math.isnan(price):
+                    continue
+                db_instance.hset(f"market:{ticker}",
                                  mapping={
-                                     "price": float(price)
+                                     "category": category,
+                                     "price": f"{price:.1f}"
                                  })
 

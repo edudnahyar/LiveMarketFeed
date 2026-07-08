@@ -1,45 +1,125 @@
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
+"""
+marketcard.py — compact HUD-style row: symbol name, live price, %change
+badge and a mini sparkline. Same public surface as the original
+MarketCard (title_label / price_label / change_label / update_market)
+so gui/dashboard.py's existing refresh() loop keeps working unmodified.
+"""
+
+from PySide6.QtWidgets import QFrame, QLabel, QHBoxLayout, QVBoxLayout, QSizePolicy
+from PySide6.QtCore import Qt
+from collections import deque
+
+from gui import theme
+from gui.Widgets.sparkline import Sparkline
 
 
 class MarketCard(QFrame):
 
-    def __init__(self, title):
-        super().__init__()
+    def __init__(self, title: str, history_len: int = 40, parent=None):
+        super().__init__(parent)
 
-        self.title_label = QLabel(title)
-        self.price_label = QLabel("--")
-        self.change_label = QLabel("--")
+        self._last_price = None
+        self._history = deque(maxlen=history_len)
 
-        layout = QVBoxLayout()
-
-        layout.addWidget(self.title_label)
-        layout.addWidget(self.price_label)
-        layout.addWidget(self.change_label)
-
-        self.setLayout(layout)
-
-        self.setStyleSheet("""
-            QFrame {
-                border: 2px solid #444;
-                border-radius: 10px;
-                padding: 15px;
-            }
-
-            QLabel {
-                font-size: 20px;
-            }
+        self.setObjectName("MarketCard")
+        self.setStyleSheet(f"""
+            QFrame#MarketCard {{
+                background-color: {theme.BG_PANEL_ALT};
+                border: 1px solid {theme.BORDER_DIM};
+                border-radius: 2px;
+            }}
+            QFrame#MarketCard:hover {{
+                border: 1px solid {theme.ACCENT_CYAN_DIM};
+            }}
         """)
 
+        row = QHBoxLayout(self)
+        row.setContentsMargins(10, 6, 10, 6)
+        row.setSpacing(10)
 
-    def update_market(self, data):
+        # left: symbol name + big price stacked
+        left = QVBoxLayout()
+        left.setSpacing(1)
 
-        price = data.get("price", "--")
-        change = data.get("change", "--")
+        self.title_label = QLabel(title.upper())
+        self.title_label.setFont(theme.mono_font(8))
+        self.title_label.setStyleSheet(f"color: {theme.TEXT_MUTED}; letter-spacing: 1px;")
 
-        self.price_label.setText(
-            f"{price}"
-        )
+        self.price_label = QLabel("—")
+        self.price_label.setFont(theme.mono_font(13, bold=True))
+        self.price_label.setStyleSheet(f"color: {theme.TEXT_PRIMARY};")
 
-        self.change_label.setText(
-            f"{change}%"
-        )
+        left.addWidget(self.title_label)
+        left.addWidget(self.price_label)
+
+        # middle: sparkline, stretches
+        self.spark = Sparkline(color=theme.ACCENT_CYAN)
+        self.spark.setMinimumWidth(70)
+
+        # right: change badge
+        self.change_label = QLabel("--")
+        self.change_label.setFont(theme.mono_font(10, bold=True))
+        self.change_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.change_label.setMinimumWidth(58)
+        self.change_label.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+
+        row.addLayout(left, 0)
+        row.addWidget(self.spark, 1)
+        row.addWidget(self.change_label, 0)
+
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setMinimumHeight(48)
+
+    # ------------------------------------------------------------------
+    def update_market(self, data: dict):
+        """Accepts the same dict shape the redis-backed refresh() loop
+        already produces: {"price": ..., "change": ...}. If "change" is
+        missing/unusable it is derived from the previous price so the
+        card is still useful against the current minimal redis schema
+        (see logistics/redis_in_stream.py, which currently only writes
+        'price')."""
+
+        raw_price = data.get("price")
+        try:
+            price = float(raw_price)
+        except (TypeError, ValueError):
+            self.price_label.setText("—")
+            return
+
+        change_pct = self._safe_float(data.get("change"))
+        if change_pct is None and self._last_price is not None and self._last_price != 0:
+            change_pct = (price - self._last_price) / self._last_price * 100.0
+
+        self._last_price = price
+        self._history.append(price)
+        self.spark.push(price)
+
+        self.price_label.setText(f"{price:,.2f}")
+
+        if change_pct is None:
+            self.change_label.setText("--")
+            self.change_label.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+            self.spark.set_color(theme.ACCENT_CYAN)
+        else:
+            sign = "+" if change_pct >= 0 else ""
+            self.change_label.setText(f"{sign}{change_pct:.2f}%")
+            color = theme.ACCENT_GREEN if change_pct >= 0 else theme.ACCENT_RED
+            self.change_label.setStyleSheet(f"color: {color}; font-weight: 600;")
+            self.spark.set_color(color)
+
+    @property
+    def history(self):
+        return list(self._history)
+
+    @property
+    def last_price(self):
+        return self._last_price
+
+    @staticmethod
+    def _safe_float(v):
+        try:
+            if v in (None, "--", ""):
+                return None
+            return float(v)
+        except (TypeError, ValueError):
+            return None
