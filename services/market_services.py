@@ -1,3 +1,5 @@
+from pandas.core.interchange.from_dataframe import primitive_column_to_ndarray
+
 from data.index import Index
 from data.commodities import Commodities
 from data.currency import Curency
@@ -32,6 +34,7 @@ def run():
             "commodity": commodity_data,
             "currency": currency_data
         }
+
 
         stream.set(
             data,

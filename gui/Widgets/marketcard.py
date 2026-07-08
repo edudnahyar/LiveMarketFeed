@@ -86,9 +86,12 @@ class MarketCard(QFrame):
             self.price_label.setText("—")
             return
 
-        change_pct = self._safe_float(data.get("change"))
-        if change_pct is None and self._last_price is not None and self._last_price != 0:
-            change_pct = (price - self._last_price) / self._last_price * 100.0
+        open_price = self._safe_float(data.get("open"))
+
+        if open_price is not None and open_price != 0:
+            change_pct = ((price - open_price) / open_price) * 100.0
+        else:
+            change_pct = None
 
         self._last_price = price
         self._history.append(price)

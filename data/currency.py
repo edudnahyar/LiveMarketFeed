@@ -12,6 +12,19 @@ class Curency:
         self.data = None
 
     def fetch(self):
-        data = yf.download(tickers=list(self.currencies.values()), period='1d')
-        data = data["Close"].iloc[-1]
-        return data
+        data = yf.download(
+            tickers=list(self.currencies.values()),
+            period="1d"
+        )
+
+        latest = data.iloc[-1]
+
+        output = {}
+
+        for ticker in self.currencies.values():
+            output[ticker] = {
+                "price": latest["Close", ticker],
+                "open": latest["Open", ticker]
+            }
+
+        return output
