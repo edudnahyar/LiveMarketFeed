@@ -196,12 +196,13 @@ class Dashboard(QWidget):
         commodities_panel.body.addStretch(1)
 
         currencies_panel = HudFrame("Currencies", accent=theme.ACCENT_AMBER,
-                                     subtitle="demo feed — no data source wired yet")
+                                     subtitle="USD/EUR · USD/JPY · USD/GBP · USD/CNY · AUD/USD")
         self.fx_cards = {
-            "EURUSD": MarketCard("EUR / USD"),
-            "GBPUSD": MarketCard("GBP / USD"),
-            "USDJPY": MarketCard("USD / JPY"),
-            "AUDUSD": MarketCard("AUD / USD"),
+            "EUR=X": MarketCard("USD / EUR"),
+            "JPY=X": MarketCard("USD / JPY"),
+            "GBP=X": MarketCard("USD / GBP"),
+            "CNY=X": MarketCard("USD / CNY"),
+            "AUDUSD=X": MarketCard("AUD / USD"),
         }
         for card in self.fx_cards.values():
             currencies_panel.body.addWidget(card)
@@ -265,12 +266,23 @@ class Dashboard(QWidget):
             "Natural Gas": "market:NG=F",
             "Gold": "market:GC=F",
         }
+        fx_redis_keys = {
+            "EUR=X": "market:EUR=X",
+            "JPY=X": "market:JPY=X",
+            "GBP=X": "market:GBP=X",
+            "CNY=X": "market:CNY=X",
+            "AUDUSD=X": "market:AUDUSD=X",
+        }
 
         try:
             for name, key in redis_keys.items():
                 data = self.redis.hgetall(key)
                 if data:
                     self.cards[name].update_market(data)
+            for name, key in fx_redis_keys.items():
+                data = self.redis.hgetall(key)
+                if data:
+                    self.fx_cards[name].update_market(data)
             self._set_link_status(True)
         except Exception:
             self._set_link_status(False)
@@ -288,20 +300,23 @@ class Dashboard(QWidget):
         for name, card in {**self.cards, **getattr(self, "fx_cards", {})}.items():
             if card.last_price is None:
                 continue
+            label = card.title_label.text()
             change_txt = card.change_label.text()
             color = theme.ACCENT_GREEN if change_txt.startswith("+") else (
                 theme.ACCENT_RED if change_txt.startswith("-") else theme.TEXT_MUTED)
-            items.append((name, f"{card.last_price:,.2f} ({change_txt})", color))
+            items.append((label, f"{card.last_price:,.2f} ({change_txt})", color))
         self.ticker.set_items(items)
 
     # ------------------------------------------------------------------
     # Demo data for panels with no backing service yet (Currencies, News).
     # Safe to delete once you wire real feeds in.
     def _seed_demo(self):
-        self._fx_base = {"EURUSD": 1.0850, "GBPUSD": 1.2650, "USDJPY": 156.20, "AUDUSD": 0.6520}
-
         # Only used as a stand-in when Redis/the market_services pipeline
         # isn't running, so the layout is still fully testable on its own.
+        self._fx_base = {
+            "EUR=X": 0.9215, "JPY=X": 156.20, "GBP=X": 0.7905,
+            "CNY=X": 7.185, "AUDUSD=X": 0.6520,
+        }
         self._index_base = {
             "SP500": 5460.0, "ASX200": 7920.0, "FTSE100": 8210.0,
             "HSI": 18340.0, "EUROSTOXX": 4950.0,
@@ -318,15 +333,16 @@ class Dashboard(QWidget):
             self.news.add_news(headline, source)
 
     def _demo_tick(self):
-        for sym, base in self._fx_base.items():
-            new_val = base + base * random.uniform(-0.0015, 0.0015)
-            self._fx_base[sym] = new_val
-            change = (new_val - base) / base * 100
-            self.fx_cards[sym].update_market({"price": new_val, "change": change})
-
-        # Indices/commodities only get demo ticks while the real Redis feed
-        # is unavailable, so this steps aside the moment your pipeline is up.
+        # Indices/commodities/currencies only get demo ticks while the real
+        # Redis feed is unavailable, so this steps aside the moment your
+        # pipeline is up and pushing real hashes.
         if not self._redis_connected:
+            for sym, base in self._fx_base.items():
+                new_val = base + base * random.uniform(-0.0015, 0.0015)
+                self._fx_base[sym] = new_val
+                change = (new_val - base) / base * 100
+                self.fx_cards[sym].update_market({"price": new_val, "change": change})
+
             for sym, base in self._index_base.items():
                 new_val = base + base * random.uniform(-0.001, 0.001)
                 self._index_base[sym] = new_val
