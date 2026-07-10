@@ -9,6 +9,7 @@ class Commodities:
             'Oil': 'CL=F',
             'Natural Gas': 'NG=F',
             'Gold': 'GC=F',
+            'Copper': 'HG=F',
         }
         self.data = None
 

@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cb989cd2-515f-4257-abd3-7d2c3812fea2" name="Changes" comment="08/07/2026">
+      <change afterPath="$PROJECT_DIR$/data/futures.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/commodities.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/commodities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/currency.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/currency.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/index.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/index.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gui/Widgets/marketcard.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/Widgets/marketcard.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logistics/redis_in_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/redis_in_stream.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/market_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/market_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +45,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.app.executor": "Run",
     "Python.commodities.executor": "Run",
+    "Python.futures.executor": "Run",
     "Python.index.executor": "Run",
     "Python.main.executor": "Run",
     "Python.market_services.executor": "Run",
@@ -85,7 +82,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1783426618025</updated>
-      <workItem from="1783426619040" duration="35044000" />
+      <workItem from="1783426619040" duration="39761000" />
     </task>
     <task id="LOCAL-00001" summary="08/07/2026">
       <option name="closed" value="true" />
@@ -111,7 +108,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783521475876</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="08/07/2026">
+      <option name="closed" value="true" />
+      <created>1783550506486</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1783550506486</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -123,11 +128,12 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/LiveMarketFeed$commodities.coverage" NAME="commodities Coverage Results" MODIFIED="1783434708886" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$futures.coverage" NAME="futures Coverage Results" MODIFIED="1783660436506" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$app.coverage" NAME="app Coverage Results" MODIFIED="1783440825896" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$market_services.coverage" NAME="market_services Coverage Results" MODIFIED="1783472491525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/services" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$index.coverage" NAME="index Coverage Results" MODIFIED="1783434830615" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$redis_in_stream.coverage" NAME="redis_in_stream Coverage Results" MODIFIED="1783526567677" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$radar.coverage" NAME="radar Coverage Results" MODIFIED="1783516901873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui/Widgets" />
-    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783527633866" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783660441329" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
