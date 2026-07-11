@@ -45,7 +45,7 @@ class Dashboard(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("MARKET CYBERDECK // LIVE FEED")
+        self.setWindowTitle("Live Market Feed")
         self.resize(1440, 860)
         self.setStyleSheet(theme.GLOBAL_QSS)
 

@@ -1,5 +1,3 @@
-from datetime import timedelta
-import datetime
 
 import yfinance as yf
 
