@@ -1,6 +1,7 @@
-from historical_fetcher import HistoricalFetcher
+from data.historicals.historical_fetcher import HistoricalFetcher
 
 class FuturesHistory(HistoricalFetcher):
+
     def __init__(self):
 
         futures = {

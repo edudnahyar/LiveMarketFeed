@@ -1,4 +1,4 @@
-from historical_fetcher import HistoricalFetcher
+from data.historicals.historical_fetcher import HistoricalFetcher
 
 
 class CommodityHistory(HistoricalFetcher):
