@@ -27,6 +27,8 @@ class PyMongo:
             test = collection.find_one({"test": "validated"})
 
             print(f"Connection successful: {test}")
+            return client
 
         except Exception as e:
             print(f"Connection error: {e}")
+            return None

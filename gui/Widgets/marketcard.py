@@ -1,8 +1,12 @@
 """
 marketcard.py — compact HUD-style row: symbol name, live price, %change
-badge and a mini sparkline. Same public surface as the original
-MarketCard (title_label / price_label / change_label / update_market)
-so gui/dashboard.py's existing refresh() loop keeps working unmodified.
+badge and a mini sparkline.
+
+Price + %change: live, from update_market(data) (Redis).
+Sparkline: static-ish, from set_history(values) (Mongo 3-month daily
+closes) — see gui/mongo_history.py and Dashboard._load_historicals().
+These two are intentionally decoupled: the chart won't jitter on every
+5s Redis poll, it only moves when a fresh historical pull comes in.
 """
 
 from PySide6.QtWidgets import QFrame, QLabel, QHBoxLayout, QVBoxLayout, QSizePolicy
@@ -72,12 +76,10 @@ class MarketCard(QFrame):
 
     # ------------------------------------------------------------------
     def update_market(self, data: dict):
-        """Accepts the same dict shape the redis-backed refresh() loop
-        already produces: {"price": ..., "change": ...}. If "change" is
-        missing/unusable it is derived from the previous price so the
-        card is still useful against the current minimal redis schema
-        (see logistics/redis_in_stream.py, which currently only writes
-        'price')."""
+        """Price + %change come from the live Redis feed, same as
+        before. The sparkline itself is NOT driven from here anymore —
+        see set_history() below, which is fed from the Mongo 3-month
+        historicals instead."""
 
         raw_price = data.get("price")
         try:
@@ -95,20 +97,24 @@ class MarketCard(QFrame):
 
         self._last_price = price
         self._history.append(price)
-        self.spark.push(price)
 
         self.price_label.setText(f"{price:,.2f}")
 
         if change_pct is None:
             self.change_label.setText("--")
             self.change_label.setStyleSheet(f"color: {theme.TEXT_MUTED};")
-            self.spark.set_color(theme.ACCENT_CYAN)
         else:
             sign = "+" if change_pct >= 0 else ""
             self.change_label.setText(f"{sign}{change_pct:.2f}%")
             color = theme.ACCENT_GREEN if change_pct >= 0 else theme.ACCENT_RED
             self.change_label.setStyleSheet(f"color: {color}; font-weight: 600;")
             self.spark.set_color(color)
+
+    def set_history(self, values):
+        """Feed the sparkline a 3-month daily-close series pulled from
+        Mongo (see gui/mongo_history.py). Independent of update_market()
+        so the chart doesn't get overwritten by every 5s Redis tick."""
+        self.spark.set_data(values)
 
     @property
     def history(self):

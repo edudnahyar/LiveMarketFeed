@@ -59,25 +59,21 @@ def run():
             "future": future_data
         }
 
-        data_hist = {
-            "index": index_documents,
-            "commodity": commodity_documents,
-            "currency": currency_documents,
-            "future": future_documents
-        }
-
+        # MongoInStream.set_historical() -> insert_many() needs a flat
+        # list of documents, not a dict keyed by asset class.
+        historical_documents = (
+            index_documents + commodity_documents + currency_documents + future_documents
+        )
 
         stream.set(
             data,
             redis_client
         )
 
-        hist_stream.set_historical(
-            data_hist,
-            mongo_client
-        )
+        if mongo_client is not None and historical_documents:
+            hist_stream.set_historical(
+                historical_documents,
+                mongo_client
+            )
 
         time.sleep(60)
-        sys.exit(
-            run().exec()
-        )

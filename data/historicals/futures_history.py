@@ -18,7 +18,7 @@ class FuturesHistory(HistoricalFetcher):
 
         super().__init__(
             tickers=futures,
-            asset_class="commodity"
+            asset_class="futures"
         )
 
     def period(self):

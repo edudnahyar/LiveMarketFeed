@@ -8,7 +8,9 @@ class IndexHistory(HistoricalFetcher):
         indices = {
             "S&P500": "^GSPC",
             "ASX200": "^AXJO",
-            "FTSE100": "^FTSE"
+            "EuroStoxx": "^STOXX50E",
+            "FTSE100": "^FTSE",
+            "Hang Seng": "^HSI"
         }
 
         super().__init__(

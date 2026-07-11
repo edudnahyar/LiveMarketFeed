@@ -1,19 +1,21 @@
 """
-dashboard.py — main window. Same Redis-backed refresh loop as before
-(same keys, same 5s cadence) rebuilt into a cyberdeck-style layout:
+dashboard.py — main window.
+
+Price + %change badges: live, from Redis, same 5s cadence as before.
+Sparklines (every card + the Market Pulse overlay): 3-month daily
+closes pulled from Mongo (see gui/mongo_history.py + Dashboard.
+_load_historicals()), refreshed on a slower timer since the underlying
+data is daily bars, not tick data. The two are intentionally decoupled
+so the charts don't jitter on every Redis poll.
 
     ┌─────────────────────────── top bar (title / clock / link status) ───────────────────────────┐
     │  GLOBAL INDICES        │      MARKET PULSE (overlay chart)      │      COMMODITIES           │
-    │  (compact rows)        │      GLOBAL ACTIVITY (radar)           │      CURRENCIES (TODO feed) │
+    │  FUTURES               │      GLOBAL ACTIVITY (radar)           │      CURRENCIES            │
     │                        │      WORLD EXCHANGES (clock strip)     │      GLOBAL NEWS (TODO feed)│
     ├────────────────────────────────── ticker tape ───────────────────────────────────────────────┤
 
-Everything besides Indices/Commodities (which already have a data
-pipeline in data/index.py + data/commodities.py) is wired with demo
-data behind a DEMO_MODE flag — Currencies and News have no backing
-service yet, so their panels are ready to receive real data via
-add_news()/update_market() but ship with placeholder ticks until you
-add those data sources.
+News has no backing service yet — its panel is ready via add_news()
+but ships with placeholder headlines until you add a source.
 """
 
 import random
@@ -27,6 +29,7 @@ from PySide6.QtCore import QTimer, Qt, QDateTime
 import redis
 
 from gui import theme
+from gui import mongo_history
 from gui.Widgets.frame import HudFrame
 from gui.Widgets.marketcard import MarketCard
 from gui.Widgets.sparkline import MultiSparkline
@@ -34,10 +37,14 @@ from gui.Widgets.ticker import TickerTape
 from gui.Widgets.radar import RadarPulse, ExchangeStrip
 from gui.Widgets.newsfeed import NewsFeed
 
-DEMO_MODE = True   # seeds Currencies/News/Pulse with fake ticks so the
-                    # dashboard looks alive even before those data
-                    # sources exist. Indices/Commodities always prefer
-                    # real Redis data when available.
+DEMO_MODE = True   # seeds News/live-price ticks so the dashboard looks
+                    # alive even before those data sources exist.
+                    # Indices/Commodities/Currencies/Futures prices
+                    # always prefer real Redis data when available;
+                    # sparklines always prefer real Mongo historicals.
+
+HISTORY_REFRESH_MS = 5 * 60 * 1000   # Mongo history is daily bars —
+                                      # no need to re-query every 5s.
 
 
 class Dashboard(QWidget):
@@ -74,7 +81,11 @@ class Dashboard(QWidget):
         self.ticker = TickerTape()
         root.addWidget(self.ticker)
 
-        # ---- refresh cadence (unchanged: 5s for market data) ----
+        # ---- Mongo connection (read-only, for 3-month sparklines) ----
+        self.mongo_client = mongo_history.get_client()
+        self._ticker_for_card = self._build_ticker_map()
+
+        # ---- refresh cadence (unchanged: 5s for live price/change) ----
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
         self.timer.start(5000)
@@ -90,7 +101,53 @@ class Dashboard(QWidget):
             self.demo_timer.start(2000)
             self._seed_demo()
 
+        self.history_timer = QTimer(self)
+        self.history_timer.timeout.connect(self._load_historicals)
+        self.history_timer.start(HISTORY_REFRESH_MS)
+
+        self._load_historicals()
         self.refresh()
+
+    # ------------------------------------------------------------------
+    def _build_ticker_map(self):
+        """card object -> yfinance ticker, spanning indices/commodities
+        (keyed by short name) and currencies/futures (already keyed by
+        ticker), so _load_historicals() can loop over one flat dict."""
+        ticker_map = {
+            self.cards["SP500"]: "^GSPC",
+            self.cards["ASX200"]: "^AXJO",
+            self.cards["FTSE100"]: "^FTSE",
+            self.cards["HSI"]: "^HSI",
+            self.cards["EUROSTOXX"]: "^STOXX50E",
+            self.cards["Crude Oil"]: "CL=F",
+            self.cards["Natural Gas"]: "NG=F",
+            self.cards["Gold"]: "GC=F",
+        }
+        for ticker, card in self.fx_cards.items():
+            ticker_map[card] = ticker
+        for ticker, card in self.futures_cards.items():
+            ticker_map[card] = ticker
+        return ticker_map
+
+    def _load_historicals(self):
+        """Pull 3-month daily closes from Mongo for every card, plus the
+        three Market Pulse series. No-op (leaves whatever's already
+        showing) for any ticker Mongo has nothing for yet."""
+        if self.mongo_client is None:
+            self.mongo_client = mongo_history.get_client()
+        if self.mongo_client is None:
+            return
+
+        for card, ticker in self._ticker_for_card.items():
+            closes = mongo_history.fetch_close_history(self.mongo_client, ticker)
+            if closes:
+                card.set_history(closes)
+
+        pulse_tickers = {"SP500": "^GSPC", "ASX200": "^AXJO", "HSI": "^HSI"}
+        for name, ticker in pulse_tickers.items():
+            closes = mongo_history.fetch_close_history(self.mongo_client, ticker)
+            if closes:
+                self.pulse.set_series_data(name, closes)
 
     # ------------------------------------------------------------------
     # background grid, matches the reference image's faint graph-paper backdrop
@@ -272,7 +329,7 @@ class Dashboard(QWidget):
         col.setSpacing(10)
 
         pulse_panel = HudFrame("Market Pulse", accent=theme.ACCENT_CYAN,
-                                subtitle="normalized overlay — all tracked instruments")
+                                subtitle="3-month daily close — SP500 · ASX200 · HSI")
         self.pulse = MultiSparkline()
         for name, color in (
             ("SP500", theme.ACCENT_CYAN),
@@ -340,11 +397,6 @@ class Dashboard(QWidget):
             self._set_link_status(False)
             return
 
-        # feed the overview chart + ticker from whatever cards have data
-        for name in ("SP500", "ASX200", "HSI"):
-            if self.cards[name].last_price is not None:
-                self.pulse.push(name, self.cards[name].last_price)
-
         self._refresh_ticker()
 
     def _refresh_ticker(self):
@@ -390,6 +442,28 @@ class Dashboard(QWidget):
         for headline, source in headlines:
             self.news.add_news(headline, source)
 
+        # Synthetic ~3-month daily-close random walk so every chart has
+        # something to show before Mongo has real historicals (or when
+        # it's unreachable). _load_historicals(), called right after
+        # this in __init__, overwrites these with real data if present.
+        bases = {**self._index_base, **self._commodity_base, **self._fx_base, **self._futures_base}
+        all_cards = {**self.cards, **self.fx_cards, **self.futures_cards}
+        for sym, base in bases.items():
+            card = all_cards.get(sym)
+            if card is None:
+                continue
+            card.set_history(self._synthetic_walk(base))
+
+        for name in ("SP500", "ASX200", "HSI"):
+            self.pulse.set_series_data(name, self._synthetic_walk(self._index_base[name]))
+
+    @staticmethod
+    def _synthetic_walk(base: float, points: int = 64, step_pct: float = 0.006):
+        values = [base]
+        for _ in range(points - 1):
+            values.append(values[-1] + values[-1] * random.uniform(-step_pct, step_pct))
+        return values
+
     def _demo_tick(self):
         # Indices/commodities/currencies only get demo ticks while the real
         # Redis feed is unavailable, so this steps aside the moment your
@@ -406,8 +480,6 @@ class Dashboard(QWidget):
                 self._index_base[sym] = new_val
                 change = (new_val - base) / base * 100
                 self.cards[sym].update_market({"price": new_val, "change": change})
-                if sym in ("SP500", "ASX200", "HSI"):
-                    self.pulse.push(sym, new_val)
 
             for sym, base in self._commodity_base.items():
                 new_val = base + base * random.uniform(-0.002, 0.002)

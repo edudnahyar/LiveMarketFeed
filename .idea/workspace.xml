@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cb989cd2-515f-4257-abd3-7d2c3812fea2" name="Changes" comment="08/07/2026">
-      <change afterPath="$PROJECT_DIR$/data/historicals/futures_history.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/historicals/futures_history.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/historicals/futures_history.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/historicals/index_history.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/historicals/index_history.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/pymongo.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/pymongo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/Widgets/marketcard.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/Widgets/marketcard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logistics/mongo_in_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/mongo_in_stream.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/market_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/market_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -49,6 +53,7 @@
     "Python.index.executor": "Run",
     "Python.main.executor": "Run",
     "Python.market_services.executor": "Run",
+    "Python.mongo_in_stream.executor": "Run",
     "Python.radar.executor": "Run",
     "Python.redis_in_stream.executor": "Run",
     "Python.sparkline.executor": "Run",
@@ -58,13 +63,16 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "ai.playground.ignore.import.keys.banner.in.settings": "true",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "/Users/rayhanaplaon/PycharmProjects/LiveMarketFeed/gui",
+    "last_opened_file_path": "/Users/rayhanaplaon/PycharmProjects/LiveMarketFeed/services",
     "settings.editor.selected.configurable": "settings.sync",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/services" />
+      <recent name="$PROJECT_DIR$/logistics" />
+      <recent name="$PROJECT_DIR$/database" />
       <recent name="$PROJECT_DIR$/gui" />
     </key>
   </component>
@@ -83,7 +91,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1783426618025</updated>
-      <workItem from="1783426619040" duration="49114000" />
+      <workItem from="1783426619040" duration="50206000" />
     </task>
     <task id="LOCAL-00001" summary="08/07/2026">
       <option name="closed" value="true" />
@@ -157,7 +165,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783735091028</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="08/07/2026">
+      <option name="closed" value="true" />
+      <created>1783735641212</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1783735641212</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -175,7 +191,8 @@
     <SUITE FILE_PATH="coverage/LiveMarketFeed$index.coverage" NAME="index Coverage Results" MODIFIED="1783434830615" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$sparkline.coverage" NAME="sparkline Coverage Results" MODIFIED="1783664098398" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui/Widgets" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$redis_in_stream.coverage" NAME="redis_in_stream Coverage Results" MODIFIED="1783526567677" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$mongo_in_stream.coverage" NAME="mongo_in_stream Coverage Results" MODIFIED="1783736361971" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$radar.coverage" NAME="radar Coverage Results" MODIFIED="1783516901873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui/Widgets" />
-    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783728946488" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783736661183" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
