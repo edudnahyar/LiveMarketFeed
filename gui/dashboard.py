@@ -19,7 +19,7 @@ add those data sources.
 import random
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QScrollArea
 )
 from PySide6.QtGui import QPainter, QColor, QPen
 from PySide6.QtCore import QTimer, Qt, QDateTime
@@ -66,7 +66,7 @@ class Dashboard(QWidget):
 
         columns = QHBoxLayout()
         columns.setSpacing(10)
-        columns.addWidget(self._build_indices_panel(), 3)
+        columns.addWidget(self._build_left_column(), 3)
         columns.addWidget(self._build_center_column(), 4)
         columns.addWidget(self._build_right_column(), 3)
         root.addLayout(columns, 1)
@@ -162,10 +162,14 @@ class Dashboard(QWidget):
         self.clock_label.setText(now.toString("HH:mm:ss") + "  UTC" + now.toString("zzz")[:0])
 
     # ------------------------------------------------------------------
-    def _build_indices_panel(self):
-        panel = HudFrame("Global Indices", accent=theme.ACCENT_CYAN,
-                          subtitle="S&P500 · ASX200 · FTSE100 · HSI · STOXX50")
+    def _build_left_column(self):
+        wrap = QWidget()
+        col = QVBoxLayout(wrap)
+        col.setContentsMargins(0, 0, 0, 0)
+        col.setSpacing(10)
 
+        indices_panel = HudFrame("Global Indices", accent=theme.ACCENT_CYAN,
+                                  subtitle="S&P500 · ASX200 · FTSE100 · HSI · STOXX50")
         self.cards = {
             "SP500": MarketCard("S&P 500"),
             "ASX200": MarketCard("ASX 200"),
@@ -174,8 +178,51 @@ class Dashboard(QWidget):
             "EUROSTOXX": MarketCard("EuroStoxx 50"),
         }
         for card in self.cards.values():
-            panel.body.addWidget(card)
-        panel.body.addStretch(1)
+            indices_panel.body.addWidget(card)
+        indices_panel.body.addStretch(1)
+
+        futures_panel = self._build_futures_panel()
+
+        col.addWidget(indices_panel, 0)
+        col.addWidget(futures_panel, 1)
+        return wrap
+
+    def _build_futures_panel(self):
+        panel = HudFrame("Futures", accent=theme.ACCENT_BLUE,
+                          subtitle="rates & FX futures")
+
+        # 10 instruments — scroll rather than stretch the whole dashboard.
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        inner = QWidget()
+        inner_layout = QVBoxLayout(inner)
+        inner_layout.setContentsMargins(0, 0, 4, 0)
+        inner_layout.setSpacing(6)
+
+        # ticker -> short display label (see data/futures.py for the full names)
+        futures_labels = {
+            "ZN=F": "10Y T-Note Fut",
+            "ZF=F": "5Y T-Note Fut",
+            "ZT=F": "2Y T-Note Fut",
+            "ZB=F": "T-Bond Fut",
+            "ZQ=F": "Fed Fund Fut",
+            "6E=F": "Euro FX Fut",
+            "6B=F": "British FX Fut",
+            "6J=F": "Japanese FX Fut",
+            "6A=F": "Australian FX Fut",
+            "RTY=F": "Russell 2000 Fut",
+        }
+        self.futures_cards = {}
+        for ticker, label in futures_labels.items():
+            card = MarketCard(label)
+            self.futures_cards[ticker] = card
+            inner_layout.addWidget(card)
+        inner_layout.addStretch(1)
+
+        scroll.setWidget(inner)
+        panel.body.addWidget(scroll)
         return panel
 
     def _build_right_column(self):
@@ -273,6 +320,7 @@ class Dashboard(QWidget):
             "CNY=X": "market:CNY=X",
             "AUDUSD=X": "market:AUDUSD=X",
         }
+        futures_redis_keys = {ticker: f"market:{ticker}" for ticker in self.futures_cards}
 
         try:
             for name, key in redis_keys.items():
@@ -283,6 +331,10 @@ class Dashboard(QWidget):
                 data = self.redis.hgetall(key)
                 if data:
                     self.fx_cards[name].update_market(data)
+            for name, key in futures_redis_keys.items():
+                data = self.redis.hgetall(key)
+                if data:
+                    self.futures_cards[name].update_market(data)
             self._set_link_status(True)
         except Exception:
             self._set_link_status(False)
@@ -297,7 +349,8 @@ class Dashboard(QWidget):
 
     def _refresh_ticker(self):
         items = []
-        for name, card in {**self.cards, **getattr(self, "fx_cards", {})}.items():
+        all_cards = {**self.cards, **getattr(self, "fx_cards", {}), **getattr(self, "futures_cards", {})}
+        for name, card in all_cards.items():
             if card.last_price is None:
                 continue
             label = card.title_label.text()
@@ -322,6 +375,11 @@ class Dashboard(QWidget):
             "HSI": 18340.0, "EUROSTOXX": 4950.0,
         }
         self._commodity_base = {"Crude Oil": 68.4, "Natural Gas": 2.91, "Gold": 2382.0}
+
+        self._futures_base = {
+            "ZN=F": 111.5, "ZF=F": 106.8, "ZT=F": 103.2, "ZB=F": 118.4, "ZQ=F": 95.6,
+            "6E=F": 1.0855, "6B=F": 1.2655, "6J=F": 0.00641, "6A=F": 0.6525, "RTY=F": 2145.0,
+        }
 
         headlines = [
             ("Central bank holds rates steady amid inflation watch", "Reuters"),
@@ -356,5 +414,11 @@ class Dashboard(QWidget):
                 self._commodity_base[sym] = new_val
                 change = (new_val - base) / base * 100
                 self.cards[sym].update_market({"price": new_val, "change": change})
+
+            for sym, base in self._futures_base.items():
+                new_val = base + base * random.uniform(-0.0015, 0.0015)
+                self._futures_base[sym] = new_val
+                change = (new_val - base) / base * 100
+                self.futures_cards[sym].update_market({"price": new_val, "change": change})
 
         self._refresh_ticker()
