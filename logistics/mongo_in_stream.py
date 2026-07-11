@@ -1,2 +1,4 @@
 class MongoInStream:
-    def set(self, data, db_instance):
+    @staticmethod
+    def set(data, db_instance):
+

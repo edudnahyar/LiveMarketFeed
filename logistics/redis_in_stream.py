@@ -1,7 +1,8 @@
 import math
 
 class RedisInStream:
-    def set(self, data, db_instance):
+    @staticmethod
+    def set(data, db_instance):
 
         for category, series in data.items():
             for ticker, values in list(series.items()):
