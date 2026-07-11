@@ -1,5 +1,3 @@
-from pandas.core.interchange.from_dataframe import primitive_column_to_ndarray
-
 from data.index import Index
 from data.commodities import Commodities
 from data.currency import Curency
