@@ -2,11 +2,15 @@
 dashboard.py — main window.
 
 Price + %change badges: live, from Redis, same 5s cadence as before.
-Sparklines (every card + the Market Pulse overlay): 3-month daily
-closes pulled from Mongo (see gui/mongo_history.py + Dashboard.
-_load_historicals()), refreshed on a slower timer since the underlying
-data is daily bars, not tick data. The two are intentionally decoupled
-so the charts don't jitter on every Redis poll.
+Sparklines (every card + the Market Pulse overlay): daily closes pulled
+from Mongo (see gui/mongo_history.py + Dashboard._load_historicals()),
+refreshed on a slower timer since the underlying data is daily bars,
+not tick data. The two are intentionally decoupled so the charts don't
+jitter on every Redis poll.
+
+A 1M / 3M / 6M / 1Y toggle on the Market Pulse panel (gui.Widgets.
+timeframe_toggle.TimeframeToggle) controls the range for ALL
+sparklines app-wide, not just that panel.
 
     ┌─────────────────────────── top bar (title / clock / link status) ───────────────────────────┐
     │  GLOBAL INDICES        │      MARKET PULSE (overlay chart)      │      COMMODITIES           │
@@ -36,6 +40,7 @@ from gui.Widgets.sparkline import MultiSparkline
 from gui.Widgets.ticker import TickerTape
 from gui.Widgets.radar import RadarPulse, ExchangeStrip
 from gui.Widgets.newsfeed import NewsFeed
+from gui.Widgets.timeframe_toggle import TimeframeToggle
 
 DEMO_MODE = True   # seeds News/live-price ticks so the dashboard looks
                     # alive even before those data sources exist.
@@ -46,6 +51,14 @@ DEMO_MODE = True   # seeds News/live-price ticks so the dashboard looks
 HISTORY_REFRESH_MS = 5 * 60 * 1000   # Mongo history is daily bars —
                                       # no need to re-query every 5s.
 
+# Approx. trading days per timeframe. Mongo only stores what
+# data/historicals/*.py has actually fetched (a rolling 3-month window
+# per HistoricalFetcher.period()), but the collection is append-only —
+# unique-indexed on (ticker, interval, timestamp) — so history depth
+# only grows the longer the ingest service runs. All three of these
+# options fit comfortably inside that 3-month window from day one.
+TIMEFRAME_TRADING_DAYS = {"1W": 5, "1M": 22, "3M": 66}
+
 
 class Dashboard(QWidget):
 
@@ -55,6 +68,8 @@ class Dashboard(QWidget):
         self.setWindowTitle("Live Market Feed")
         self.resize(1440, 860)
         self.setStyleSheet(theme.GLOBAL_QSS)
+
+        self._current_timeframe = "1M"
 
         # ---- Redis connection (unchanged behaviour from original) ----
         self.redis = None
@@ -130,24 +145,38 @@ class Dashboard(QWidget):
         return ticker_map
 
     def _load_historicals(self):
-        """Pull 3-month daily closes from Mongo for every card, plus the
-        three Market Pulse series. No-op (leaves whatever's already
-        showing) for any ticker Mongo has nothing for yet."""
+        """Pull daily closes from Mongo, at the currently-selected
+        timeframe, for every card plus the three Market Pulse series.
+        No-op (leaves whatever's already showing) for any ticker Mongo
+        has nothing for yet."""
         if self.mongo_client is None:
             self.mongo_client = mongo_history.get_client()
         if self.mongo_client is None:
             return
 
+        limit = TIMEFRAME_TRADING_DAYS.get(self._current_timeframe, 66)
+
         for card, ticker in self._ticker_for_card.items():
-            closes = mongo_history.fetch_close_history(self.mongo_client, ticker)
+            closes = mongo_history.fetch_close_history(self.mongo_client, ticker, limit=limit)
             if closes:
                 card.set_history(closes)
 
         pulse_tickers = {"SP500": "^GSPC", "ASX200": "^AXJO", "HSI": "^HSI"}
         for name, ticker in pulse_tickers.items():
-            closes = mongo_history.fetch_close_history(self.mongo_client, ticker)
+            closes = mongo_history.fetch_close_history(self.mongo_client, ticker, limit=limit)
             if closes:
                 self.pulse.set_series_data(name, closes)
+
+    def _on_timeframe_changed(self, label: str):
+        self._current_timeframe = label
+        points = TIMEFRAME_TRADING_DAYS.get(label, 66)
+        self._pulse_panel.subtitle_label.setText(
+            f"{label} daily close — applies to all sparklines"
+        )
+        # Instant feedback from synthetic data (or whatever's cached),
+        # then overwritten by real Mongo data a moment later if present.
+        self._refresh_demo_history(points)
+        self._load_historicals()
 
     # ------------------------------------------------------------------
     # background grid, matches the reference image's faint graph-paper backdrop
@@ -329,7 +358,17 @@ class Dashboard(QWidget):
         col.setSpacing(10)
 
         pulse_panel = HudFrame("Market Pulse", accent=theme.ACCENT_CYAN,
-                                subtitle="3-month daily close — SP500 · ASX200 · HSI")
+                                subtitle="1M daily close — applies to all sparklines")
+        self._pulse_panel = pulse_panel
+
+        self.timeframe_toggle = TimeframeToggle(default=self._current_timeframe)
+        self.timeframe_toggle.changed.connect(self._on_timeframe_changed)
+        toggle_row = QHBoxLayout()
+        toggle_row.setContentsMargins(0, 0, 0, 0)
+        toggle_row.addStretch(1)
+        toggle_row.addWidget(self.timeframe_toggle)
+        pulse_panel.body.addLayout(toggle_row)
+
         self.pulse = MultiSparkline()
         for name, color in (
             ("SP500", theme.ACCENT_CYAN),
@@ -442,20 +481,26 @@ class Dashboard(QWidget):
         for headline, source in headlines:
             self.news.add_news(headline, source)
 
-        # Synthetic ~3-month daily-close random walk so every chart has
-        # something to show before Mongo has real historicals (or when
-        # it's unreachable). _load_historicals(), called right after
-        # this in __init__, overwrites these with real data if present.
+        # Synthetic daily-close random walk so every chart has something
+        # to show before Mongo has real historicals (or when it's
+        # unreachable). _load_historicals(), called right after this in
+        # __init__, overwrites these with real data if present.
+        self._refresh_demo_history(TIMEFRAME_TRADING_DAYS[self._current_timeframe])
+
+    def _refresh_demo_history(self, points: int):
+        """(Re)generate synthetic history at the given length. Used at
+        startup and whenever the timeframe toggle changes — instant
+        visual feedback even before/without a real Mongo pull."""
         bases = {**self._index_base, **self._commodity_base, **self._fx_base, **self._futures_base}
         all_cards = {**self.cards, **self.fx_cards, **self.futures_cards}
         for sym, base in bases.items():
             card = all_cards.get(sym)
             if card is None:
                 continue
-            card.set_history(self._synthetic_walk(base))
+            card.set_history(self._synthetic_walk(base, points=points))
 
         for name in ("SP500", "ASX200", "HSI"):
-            self.pulse.set_series_data(name, self._synthetic_walk(self._index_base[name]))
+            self.pulse.set_series_data(name, self._synthetic_walk(self._index_base[name], points=points))
 
     @staticmethod
     def _synthetic_walk(base: float, points: int = 64, step_pct: float = 0.006):

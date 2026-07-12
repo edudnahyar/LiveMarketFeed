@@ -34,8 +34,8 @@ class Sparkline(QWidget):
         self.update()
 
     def set_data(self, values):
-        """Replace the whole series at once (e.g. a 3-month historical
-        pull), rather than appending one live tick at a time."""
+        """Replace the whole series at once (e.g. a historical pull),
+        rather than appending one live tick at a time."""
         maxlen = self._data.maxlen
         if values and len(values) > maxlen:
             maxlen = len(values)
@@ -134,13 +134,16 @@ class MultiSparkline(QWidget):
         self.update()
 
     def set_series_data(self, name: str, values, color: str = None):
-        """Replace one series' whole history at once (3-month pull),
-        rather than appending one live tick at a time."""
+        """Replace one series' whole history at once (e.g. a historical
+        pull), rather than appending one live tick at a time."""
         if name not in self._series:
             self.add_series(name, color or theme.ACCENT_CYAN)
         elif color:
             self._series[name]["color"] = QColor(color)
-        self._series[name]["data"] = deque(values, maxlen=self._max_points)
+        maxlen = self._max_points
+        if values and len(values) > maxlen:
+            maxlen = len(values)
+        self._series[name]["data"] = deque(values, maxlen=maxlen)
         self.update()
 
     def paintEvent(self, event):

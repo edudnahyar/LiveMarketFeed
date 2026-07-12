@@ -9,6 +9,8 @@ from data.historicals.commodity_history import CommodityHistory
 from data.historicals.currency_history import CurrencyHistory
 from data.historicals.futures_history import FuturesHistory
 
+from data.news.news import News
+
 from database.redis import Redis
 from database.pymongo import PyMongo
 from logistics.redis_in_stream import RedisInStream
@@ -29,6 +31,8 @@ def run():
     commodity_history = CommodityHistory()
     currency_history = CurrencyHistory()
     future_history = FuturesHistory()
+
+    news = News()
 
     redis = Redis()
     redis_client = redis.connect()
@@ -52,17 +56,19 @@ def run():
         currency_documents = currency_history.fetch()
         future_documents = future_history.fetch()
 
+        news_data = news.fetch()
+
         data = {
             "index": index_data,
             "commodity": commodity_data,
             "currency": currency_data,
-            "future": future_data
+            "future": future_data,
         }
 
         # MongoInStream.set_historical() -> insert_many() needs a flat
         # list of documents, not a dict keyed by asset class.
         historical_documents = (
-            index_documents + commodity_documents + currency_documents + future_documents
+            index_documents + commodity_documents + currency_documents + future_documents + news_data
         )
 
         stream.set(
