@@ -3,10 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="cb989cd2-515f-4257-abd3-7d2c3812fea2" name="Changes" comment="08/07/2026">
       <change beforePath="$PROJECT_DIR$/data/news/news.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/news/news.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gui/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/dashboard.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gui/mongo_history.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/mongo_history.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logistics/mongo_in_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/mongo_in_stream.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/market_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/market_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,7 +87,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1783426618025</updated>
-      <workItem from="1783426619040" duration="56734000" />
+      <workItem from="1783426619040" duration="59290000" />
     </task>
     <task id="LOCAL-00001" summary="08/07/2026">
       <option name="closed" value="true" />
@@ -213,7 +209,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783839456777</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="08/07/2026">
+      <option name="closed" value="true" />
+      <created>1783904122760</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1783904122760</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -234,6 +238,6 @@
     <SUITE FILE_PATH="coverage/LiveMarketFeed$redis_in_stream.coverage" NAME="redis_in_stream Coverage Results" MODIFIED="1783526567677" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$mongo_in_stream.coverage" NAME="mongo_in_stream Coverage Results" MODIFIED="1783736361971" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$radar.coverage" NAME="radar Coverage Results" MODIFIED="1783516901873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui/Widgets" />
-    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783904080940" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783907202127" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
