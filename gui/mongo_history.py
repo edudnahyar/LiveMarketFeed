@@ -16,6 +16,7 @@ MONGO_HOST = "localhost"
 MONGO_PORT = 27017
 DB_NAME = "markets"
 COLLECTION_NAME = "securities"
+NEWS_COLLECTION_NAME = "news"
 
 
 def get_client(timeout_ms: int = 1500):
@@ -52,5 +53,23 @@ def fetch_close_history(client, ticker: str, interval: str = "1d", limit: int = 
         docs = list(cursor)
         docs.reverse()  # ascending chronological order for charting
         return [d["close"] for d in docs if "close" in d]
+    except Exception:
+        return []
+
+
+def fetch_latest_news(client, limit: int = 20):
+    """Most recent news documents (see data/news/news.py +
+    logistics/mongo_in_stream.py's set_news), newest first. Empty list
+    if Mongo is unreachable or nothing's been ingested yet."""
+    if client is None:
+        return []
+    try:
+        collection = client[DB_NAME][NEWS_COLLECTION_NAME]
+        cursor = (
+            collection.find({}, {"_id": 0})
+            .sort("published", -1)
+            .limit(limit)
+        )
+        return list(cursor)
     except Exception:
         return []

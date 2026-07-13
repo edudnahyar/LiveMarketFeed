@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cb989cd2-515f-4257-abd3-7d2c3812fea2" name="Changes" comment="08/07/2026">
-      <change afterPath="$PROJECT_DIR$/data/news/news.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gui/Widgets/sparkline.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/Widgets/sparkline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/news/news.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/news/news.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/dashboard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/mongo_history.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/mongo_history.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logistics/mongo_in_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/mongo_in_stream.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/market_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/market_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -51,6 +52,7 @@
     "Python.index.executor": "Run",
     "Python.main.executor": "Run",
     "Python.market_services.executor": "Run",
+    "Python.mongo_history.executor": "Run",
     "Python.mongo_in_stream.executor": "Run",
     "Python.radar.executor": "Run",
     "Python.redis_in_stream.executor": "Run",
@@ -89,7 +91,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1783426618025</updated>
-      <workItem from="1783426619040" duration="54725000" />
+      <workItem from="1783426619040" duration="56734000" />
     </task>
     <task id="LOCAL-00001" summary="08/07/2026">
       <option name="closed" value="true" />
@@ -195,7 +197,23 @@
       <option name="project" value="LOCAL" />
       <updated>1783737420468</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="08/07/2026">
+      <option name="closed" value="true" />
+      <created>1783839449590</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1783839449590</updated>
+    </task>
+    <task id="LOCAL-00015" summary="08/07/2026">
+      <option name="closed" value="true" />
+      <created>1783839456777</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1783839456777</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -210,11 +228,12 @@
     <SUITE FILE_PATH="coverage/LiveMarketFeed$futures.coverage" NAME="futures Coverage Results" MODIFIED="1783660436506" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$app.coverage" NAME="app Coverage Results" MODIFIED="1783440825896" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$market_services.coverage" NAME="market_services Coverage Results" MODIFIED="1783662771769" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/services" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$mongo_history.coverage" NAME="mongo_history Coverage Results" MODIFIED="1783904074438" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$index.coverage" NAME="index Coverage Results" MODIFIED="1783434830615" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$sparkline.coverage" NAME="sparkline Coverage Results" MODIFIED="1783664098398" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui/Widgets" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$redis_in_stream.coverage" NAME="redis_in_stream Coverage Results" MODIFIED="1783526567677" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$mongo_in_stream.coverage" NAME="mongo_in_stream Coverage Results" MODIFIED="1783736361971" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/logistics" />
     <SUITE FILE_PATH="coverage/LiveMarketFeed$radar.coverage" NAME="radar Coverage Results" MODIFIED="1783516901873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gui/Widgets" />
-    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783761336478" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/LiveMarketFeed$main.coverage" NAME="main Coverage Results" MODIFIED="1783904080940" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

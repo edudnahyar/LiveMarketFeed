@@ -37,10 +37,27 @@ class MongoInStream:
         markets = db_instance["markets"]
         news = markets["news"]
 
+        # News docs don't have a "ticker" field (they have "symbol") — a
+        # unique index on "ticker" would treat every document as a
+        # duplicate null key after the first and crash on insert. "url"
+        # is the natural per-article identity and is what actually
+        # repeats across polls of the same headline.
         news.create_index(
             [
-                ("ticker", 1),
+                ("url", 1),
             ],
             unique=True
         )
-        news.insert_many(data)
+
+        # Same story as set_historical(): re-polling news every loop
+        # tick means most articles on any run after the first are
+        # duplicates of ones already stored. ordered=False + swallowing
+        # duplicate-key errors makes this idempotent instead of crashing
+        # the ingest loop.
+        try:
+            news.insert_many(data, ordered=False)
+        except pymongo.errors.BulkWriteError as e:
+            write_errors = e.details.get("writeErrors", [])
+            non_duplicate_errors = [we for we in write_errors if we.get("code") != 11000]
+            if non_duplicate_errors:
+                raise

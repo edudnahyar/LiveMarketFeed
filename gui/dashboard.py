@@ -8,21 +8,24 @@ refreshed on a slower timer since the underlying data is daily bars,
 not tick data. The two are intentionally decoupled so the charts don't
 jitter on every Redis poll.
 
-A 1M / 3M / 6M / 1Y toggle on the Market Pulse panel (gui.Widgets.
+A 1W / 1M / 3M toggle on the Market Pulse panel (gui.Widgets.
 timeframe_toggle.TimeframeToggle) controls the range for ALL
 sparklines app-wide, not just that panel.
 
     ┌─────────────────────────── top bar (title / clock / link status) ───────────────────────────┐
     │  GLOBAL INDICES        │      MARKET PULSE (overlay chart)      │      COMMODITIES           │
     │  FUTURES               │      GLOBAL ACTIVITY (radar)           │      CURRENCIES            │
-    │                        │      WORLD EXCHANGES (clock strip)     │      GLOBAL NEWS (TODO feed)│
+    │                        │      WORLD EXCHANGES (clock strip)     │      GLOBAL NEWS           │
     ├────────────────────────────────── ticker tape ───────────────────────────────────────────────┤
 
-News has no backing service yet — its panel is ready via add_news()
-but ships with placeholder headlines until you add a source.
+Global News: pulled from Mongo (data/news/news.py + Dashboard._load_news()),
+same slow-timer pattern as historicals — per-symbol yfinance company
+news via OpenBB, merged into one feed. Falls back to placeholder
+headlines (_seed_demo_news()) only if Mongo has nothing yet.
 """
 
 import random
+from datetime import datetime
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy, QScrollArea
@@ -96,9 +99,10 @@ class Dashboard(QWidget):
         self.ticker = TickerTape()
         root.addWidget(self.ticker)
 
-        # ---- Mongo connection (read-only, for 3-month sparklines) ----
+        # ---- Mongo connection (read-only, for sparklines + news) ----
         self.mongo_client = mongo_history.get_client()
         self._ticker_for_card = self._build_ticker_map()
+        self._seen_news_urls = set()
 
         # ---- refresh cadence (unchanged: 5s for live price/change) ----
         self.timer = QTimer(self)
@@ -120,7 +124,13 @@ class Dashboard(QWidget):
         self.history_timer.timeout.connect(self._load_historicals)
         self.history_timer.start(HISTORY_REFRESH_MS)
 
+        self.news_timer = QTimer(self)
+        self.news_timer.timeout.connect(self._load_news)
+        self.news_timer.start(HISTORY_REFRESH_MS)
+
         self._load_historicals()
+        if not self._load_news() and DEMO_MODE:
+            self._seed_demo_news()
         self.refresh()
 
     # ------------------------------------------------------------------
@@ -137,6 +147,7 @@ class Dashboard(QWidget):
             self.cards["Crude Oil"]: "CL=F",
             self.cards["Natural Gas"]: "NG=F",
             self.cards["Gold"]: "GC=F",
+            self.cards["Copper"]: "HG=F",
         }
         for ticker, card in self.fx_cards.items():
             ticker_map[card] = ticker
@@ -166,6 +177,50 @@ class Dashboard(QWidget):
             closes = mongo_history.fetch_close_history(self.mongo_client, ticker, limit=limit)
             if closes:
                 self.pulse.set_series_data(name, closes)
+
+    def _load_news(self) -> bool:
+        """Pull the latest news from Mongo (data/news/news.py +
+        logistics/mongo_in_stream.py's set_news) and add anything new
+        to the Global News panel, oldest-first so the newest article
+        ends up on top. Returns True if Mongo had any news at all (even
+        if none of it was new since the last check) — used at startup
+        to decide whether to fall back to demo headlines."""
+        if self.mongo_client is None:
+            self.mongo_client = mongo_history.get_client()
+        if self.mongo_client is None:
+            return False
+
+        docs = mongo_history.fetch_latest_news(self.mongo_client, limit=20)
+        if not docs:
+            return False
+
+        new_docs = [d for d in docs if d.get("url") and d["url"] not in self._seen_news_urls]
+        new_docs.sort(key=lambda d: d.get("published") or datetime.min)
+
+        for doc in new_docs:
+            self._seen_news_urls.add(doc["url"])
+            self.news.add_news(
+                doc.get("title") or "(untitled)",
+                doc.get("source") or "",
+                doc.get("published"),
+            )
+
+        if new_docs:
+            self._news_panel.subtitle_label.setText("yfinance company news, via OpenBB")
+        return True
+
+    def _seed_demo_news(self):
+        """Placeholder headlines shown only until real news arrives from
+        Mongo (or indefinitely if Mongo/the news pipeline isn't up)."""
+        self._news_panel.subtitle_label.setText("demo feed — waiting on real news source")
+        headlines = [
+            ("Central bank holds rates steady amid inflation watch", "Reuters"),
+            ("Tech shares rally on strong earnings outlook", "Bloomberg"),
+            ("Oil slips as demand forecasts are trimmed", "AP"),
+            ("Regional manufacturing index beats expectations", "WSJ"),
+        ]
+        for headline, source in headlines:
+            self.news.add_news(headline, source)
 
     def _on_timeframe_changed(self, label: str):
         self._current_timeframe = label
@@ -318,13 +373,14 @@ class Dashboard(QWidget):
         col.setSpacing(10)
 
         commodities_panel = HudFrame("Commodities", accent=theme.ACCENT_AMBER,
-                                      subtitle="Oil · Natural Gas · Gold")
+                                      subtitle="Oil · Natural Gas · Gold · Copper")
         self.cards.update({
             "Crude Oil": MarketCard("Crude Oil"),
             "Natural Gas": MarketCard("Natural Gas"),
             "Gold": MarketCard("Gold"),
+            "Copper": MarketCard("Copper"),
         })
-        for key in ("Crude Oil", "Natural Gas", "Gold"):
+        for key in ("Crude Oil", "Natural Gas", "Gold", "Copper"):
             commodities_panel.body.addWidget(self.cards[key])
         commodities_panel.body.addStretch(1)
 
@@ -342,7 +398,8 @@ class Dashboard(QWidget):
         currencies_panel.body.addStretch(1)
 
         news_panel = HudFrame("Global News", accent=theme.ACCENT_RED,
-                               subtitle="demo feed — hook up your news source")
+                               subtitle="connecting to news feed…")
+        self._news_panel = news_panel
         self.news = NewsFeed()
         news_panel.body.addWidget(self.news)
 
@@ -408,6 +465,7 @@ class Dashboard(QWidget):
             "Crude Oil": "market:CL=F",
             "Natural Gas": "market:NG=F",
             "Gold": "market:GC=F",
+            "Copper": "market:HG=F",
         }
         fx_redis_keys = {
             "EUR=X": "market:EUR=X",
@@ -465,21 +523,12 @@ class Dashboard(QWidget):
             "SP500": 5460.0, "ASX200": 7920.0, "FTSE100": 8210.0,
             "HSI": 18340.0, "EUROSTOXX": 4950.0,
         }
-        self._commodity_base = {"Crude Oil": 68.4, "Natural Gas": 2.91, "Gold": 2382.0}
+        self._commodity_base = {"Crude Oil": 68.4, "Natural Gas": 2.91, "Gold": 2382.0, "Copper": 4.55}
 
         self._futures_base = {
             "ZN=F": 111.5, "ZF=F": 106.8, "ZT=F": 103.2, "ZB=F": 118.4, "ZQ=F": 95.6,
             "6E=F": 1.0855, "6B=F": 1.2655, "6J=F": 0.00641, "6A=F": 0.6525, "RTY=F": 2145.0,
         }
-
-        headlines = [
-            ("Central bank holds rates steady amid inflation watch", "Reuters"),
-            ("Tech shares rally on strong earnings outlook", "Bloomberg"),
-            ("Oil slips as demand forecasts are trimmed", "AP"),
-            ("Regional manufacturing index beats expectations", "WSJ"),
-        ]
-        for headline, source in headlines:
-            self.news.add_news(headline, source)
 
         # Synthetic daily-close random walk so every chart has something
         # to show before Mongo has real historicals (or when it's

@@ -43,6 +43,12 @@ def run():
     stream = RedisInStream()
     hist_stream = MongoInStream()
 
+    # News changes far slower than prices, and each tick fans out to 9
+    # separate yfinance calls (one per tracked symbol) — polling that
+    # every 60s like the price loop is both wasteful and a good way to
+    # get rate-limited. Only fetch news every NEWS_EVERY_N_TICKS loops.
+    NEWS_EVERY_N_TICKS = 10   # ~10 minutes at a 60s loop
+    tick = 0
 
     while True:
 
@@ -56,8 +62,6 @@ def run():
         currency_documents = currency_history.fetch()
         future_documents = future_history.fetch()
 
-        news_data = news.fetch()
-
         data = {
             "index": index_data,
             "commodity": commodity_data,
@@ -68,7 +72,7 @@ def run():
         # MongoInStream.set_historical() -> insert_many() needs a flat
         # list of documents, not a dict keyed by asset class.
         historical_documents = (
-            index_documents + commodity_documents + currency_documents + future_documents + news_data
+            index_documents + commodity_documents + currency_documents + future_documents
         )
 
         stream.set(
@@ -82,4 +86,13 @@ def run():
                 mongo_client
             )
 
+        if tick % NEWS_EVERY_N_TICKS == 0:
+            news_data = news.fetch()
+            if mongo_client is not None and news_data:
+                hist_stream.set_news(
+                    news_data,
+                    mongo_client
+                )
+
+        tick += 1
         time.sleep(60)
