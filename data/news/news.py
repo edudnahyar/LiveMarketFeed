@@ -39,7 +39,7 @@ class News:
 
         for symbol in self.symbols:
             try:
-                raw_items = yf.Ticker(symbol).get_news(count=self.limit) or []
+                raw_items = yf.Search(symbol, news_count=self.limit) or []
             except Exception as e:
                 # One symbol having no news (or yfinance hiccuping) for a
                 # moment shouldn't take down the whole ingest loop.
